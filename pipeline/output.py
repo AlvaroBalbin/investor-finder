@@ -62,6 +62,24 @@ def stage_is_early(stage) -> bool:
     return False
 
 
+def is_pre_seed(rec: dict) -> bool:
+    """Whether a fund effectively writes pre-seed checks.
+
+    True if the stated stage includes pre-seed, OR the fund is small enough that
+    it is a pre-seed fund in practice: a micro/sub-$20M fund (or one that states
+    seed and writes small checks) almost always invests at pre-seed.
+    """
+    if stage_has_preseed(rec.get("stage", [])):
+        return True
+    bucket = (rec.get("size_bucket") or "").lower()
+    if bucket == "micro":
+        return True
+    est = rec.get("est_fund_size_usd")
+    if isinstance(est, (int, float)) and est < 20_000_000:
+        return True
+    return False
+
+
 def rows_from_records(records: list[dict]) -> list[dict]:
     """Flatten firm records into founder-level rows."""
     rows = []
@@ -70,7 +88,7 @@ def rows_from_records(records: list[dict]) -> list[dict]:
         sub_20m = ""
         if isinstance(est, (int, float)):
             sub_20m = "yes" if est < 20_000_000 else "no"
-        pre_seed = "yes" if stage_has_preseed(rec.get("stage", [])) else ""
+        pre_seed = "yes" if is_pre_seed(rec) else ""
         base = {
             "firm": rec.get("firm", ""),
             "website": rec.get("website", ""),

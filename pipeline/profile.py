@@ -129,7 +129,10 @@ Return a JSON object describing this firm as an investor:
   "hq_location": str,                       // city, state if known else ""
   "thesis": str,                            // one sentence
   "sectors": [str],
-  "stage": [str],                           // e.g. pre-seed, seed
+  "stage": [str],                           // check stages, e.g. ["pre-seed","seed"].
+      // A small / emerging / Fund I or solo-GP fund almost always writes
+      // pre-seed and seed checks, so include "pre-seed" unless the evidence
+      // clearly shows they only come in at Series A or later.
   "check_size": str,                        // e.g. "$50k-$250k" or ""
   "size_bucket": "micro"|"small"|"mid"|"large"|"mega"|"unknown",
       // micro = under $20M total fund, small = $20M-$50M, mid = $50M-$200M,

@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from pipeline import contacts, output
 from pipeline.exclude import is_excluded
-from pipeline.output import stage_has_preseed, stage_is_early
+from pipeline.output import is_pre_seed, stage_is_early
 
 # Buckets we keep. "small" = $20-50M (allowed per the brief); "unknown" kept
 # on benefit of the doubt and flagged.
@@ -41,19 +41,19 @@ def passes_filter(rec: dict, size_ceiling: float) -> bool:
     bucket = (rec.get("size_bucket") or "").lower()
     if bucket and bucket not in KEEP_BUCKETS:
         return False
-    # Backstop on a high-confidence explicit estimate when the bucket is missing.
+    # Hard backstop: any explicit estimate above the ceiling is dropped,
+    # regardless of bucket or confidence. Catches funds the LLM bucketed as
+    # "small/unknown" but estimated at $100M+ (e.g. $700M slipping through).
     est = rec.get("est_fund_size_usd")
-    conf = rec.get("size_confidence", "low")
-    if bucket in ("", "unknown") and isinstance(est, (int, float)):
-        if est > size_ceiling and conf == "high":
-            return False
+    if isinstance(est, (int, float)) and est > size_ceiling:
+        return False
     return True
 
 
 def rank_key(rec: dict):
     bucket = (rec.get("size_bucket") or "").lower()
     micro = bucket == "micro"
-    pre_seed = stage_has_preseed(rec.get("stage", []))
+    pre_seed = is_pre_seed(rec)
     cons_high = rec.get("consumer_confidence") == "high"
     has_contact = any(
         c.get("founder_linkedin") or c.get("founder_email")
@@ -116,7 +116,7 @@ def select_and_output(
     n_founders = sum(1 for r in rows if r.get("founder_name"))
     n_email = sum(1 for r in rows if r.get("founder_email"))
     n_li = sum(1 for r in rows if r.get("founder_linkedin"))
-    pre_seed_funds = sum(1 for r in kept if stage_has_preseed(r.get("stage", [])))
+    pre_seed_funds = sum(1 for r in kept if is_pre_seed(r))
     micro_funds = sum(1 for r in kept if (r.get("size_bucket") or "").lower() == "micro")
     mkt_funds = sum(1 for r in kept if r.get("is_marketplace"))
     _log("")

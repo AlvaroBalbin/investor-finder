@@ -60,6 +60,7 @@ _NAME_NOISE = re.compile(r"[^a-z0-9 ]+")
 
 def _norm(name: str) -> str:
     n = _NAME_NOISE.sub("", (name or "").lower()).strip()
+    n = re.sub(r"^the\s+", "", n)  # "The Venture Reality Fund" == "Venture Reality Fund"
     n = re.sub(r"\s+(ventures|ventura|capital|partners|vc|fund|funds|management|group)$", "", n)
     return re.sub(r"\s+", " ", n).strip()
 
