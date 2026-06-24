@@ -71,7 +71,7 @@ def main() -> int:
         "firm", "website", "hq_location", "thesis", "sectors", "stage",
         "check_size", "pre_seed", "est_fund_size_usd", "sub_20m", "over_20m_usd",
         "size_confidence", "fund_size_source", "is_consumer", "is_marketplace",
-        "discovery_source",
+        "fit_sg", "cold_angle", "discovery_source",
     ]
     for r in rows:
         f = r["firm"]

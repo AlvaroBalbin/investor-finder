@@ -31,6 +31,8 @@ COLUMNS = [
     "is_consumer",
     "consumer_confidence",
     "is_marketplace",
+    "fit_sg",
+    "cold_angle",
     "founder_name",
     "founder_role",
     "founder_linkedin",
@@ -114,6 +116,8 @@ def rows_from_records(records: list[dict]) -> list[dict]:
             "is_consumer": _yn(rec.get("is_consumer")),
             "consumer_confidence": rec.get("consumer_confidence", ""),
             "is_marketplace": _yn(rec.get("is_marketplace")),
+            "fit_sg": rec.get("fit_sg", ""),
+            "cold_angle": rec.get("cold_angle", ""),
             "discovery_source": rec.get("discovery_source", ""),
         }
         contacts = rec.get("contacts") or []
