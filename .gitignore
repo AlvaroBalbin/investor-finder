@@ -1,0 +1,16 @@
+# secrets
+.env
+.env.local
+
+# outputs / caches
+data/
+*.csv
+.cache/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# os
+.DS_Store
+Thumbs.db
