@@ -17,7 +17,11 @@ _NOISE = re.compile(r"[^a-z0-9 ]+")
 
 def _norm(name: str) -> str:
     n = _NOISE.sub("", (name or "").lower())
-    n = re.sub(r"\s+(ventures|capital|partners|vc|fund|funds|management|group|associates)\b", "", n)
+    n = re.sub(
+        r"\s+(ventures|capital|partners|vc|fund|funds|management|group|associates|investors|investments)\b",
+        "",
+        n,
+    )
     return re.sub(r"\s+", " ", n).strip()
 
 
@@ -36,6 +40,29 @@ _MEGA = {
     "slow", "lowercarbon", "obvious", "haystack", "village global", "susa",
     "cowboy", "matrix", "trinity", "sierra", "norwest", "m13", "signalfire",
 }
+
+
+# Non-fund noise that the directory / listicle harvest can let through:
+# list-page titles, accelerators, university programs, angel clubs, movements.
+_JUNK_NAME = re.compile(
+    r"(\bvc sheet\b|\bcurated\b|investing in|^\d+\s+funds|funds?\s*[-:]|"
+    r"\blist of\b|\baccelerator\b|\bincubator\b|\bsandbox\b|venture club|"
+    r"angel group|\bangels\b|zebras|\bunite\b|\bcooperative\b|\bfellowship\b|"
+    r"\bprogram\b|\buniversity\b|\bcollege\b|business school|farm to fork|"
+    r"\bcohort\b|bootcamp|\bmeetup\b|techstars|station houston)",
+    re.I,
+)
+# Only domains that are themselves non-fund orgs (universities, movements), not
+# directories a real fund's site might be mis-resolved to.
+_JUNK_DOMAINS = (".edu", "zebrasunite", "rockiesventureclub")
+
+
+def is_not_fund(firm: str, website: str = "") -> bool:
+    """True for entries that are not an actual investable fund."""
+    if _JUNK_NAME.search(firm or ""):
+        return True
+    w = (website or "").lower()
+    return any(d in w for d in _JUNK_DOMAINS)
 
 
 def is_excluded(firm: str) -> bool:

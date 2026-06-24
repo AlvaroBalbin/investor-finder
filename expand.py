@@ -23,38 +23,43 @@ from providers import llm, search, web
 
 RECORDS_CACHE = "data/_records.json"
 
-# Round-2 niches + geographies, chosen to surface funds the first pass missed.
-# Dedup against the cache means only genuinely new firms get profiled, so it is
-# safe to re-run with a fresh angle set.
+# Round-3 angles: emerging-manager and city-by-city sweeps to surface the long
+# tail of small consumer funds. Dedup against the cache means only genuinely new
+# firms get profiled, so it is safe to re-run with a fresh angle set.
 _NICHE_ANGLES = [
-    "US seed funds investing in music, audio, or podcasting consumer startups",
-    "US early-stage funds investing in consumer sustainability or climate-friendly brands",
-    "US seed funds investing in longevity, senior care, or aging consumer products",
-    "US early-stage funds investing in consumer hardware or smart home products",
-    "US seed funds investing in sports, outdoor, or fitness-tech consumer startups",
-    "US early-stage funds investing in mobility, micromobility, or consumer automotive",
-    "US seed funds investing in consumer AI apps or companion apps",
-    "US early-stage funds investing in food-tech, restaurant-tech, or grocery startups",
-    "US seed funds investing in consumer subscription or membership businesses",
-    "US early-stage funds backing second-time or operator founders in consumer",
-    "US pre-seed funds writing checks under $250k into consumer startups",
-    "US seed funds investing in LGBTQ, Latino, or Asian-American led consumer startups",
-    "Texas or Southeast US based early-stage consumer venture funds",
-    "Midwest US based seed-stage consumer and marketplace venture funds",
-    "Pacific Northwest or Mountain West consumer venture funds",
-    "US university-affiliated or alumni-backed consumer seed funds",
-    "US faith-based or values-driven consumer venture funds",
-    "US studio and venture-builder funds focused on consumer brands",
+    "US first-check and day-one pre-seed funds backing consumer startups",
+    "US AngelList rolling funds focused on consumer and B2C",
+    "US consumer angel investors who run small funds or syndicates",
+    "New York City based small consumer and DTC seed funds",
+    "Los Angeles based consumer, commerce, and creator seed funds",
+    "Austin or Dallas based early-stage consumer venture funds",
+    "Miami based consumer and marketplace seed funds",
+    "Chicago based consumer and CPG venture funds",
+    "Boston based consumer and marketplace seed funds",
+    "Seattle based consumer seed funds",
+    "Atlanta or Nashville based consumer venture funds",
+    "Denver or Salt Lake City based consumer seed funds",
+    "US seed funds investing in consumer social, messaging, or community apps",
+    "US seed funds investing in dating, relationships, or consumer connection apps",
+    "US seed funds investing in baby, maternity, parenting, or kids consumer brands",
+    "US seed funds investing in beauty, skincare, wellness, or sexual-wellness brands",
+    "US seed funds investing in consumer travel, outdoor, or experiences",
+    "US seed funds investing in consumer gaming, creator tools, or interactive media",
+    "US seed funds investing in consumer real estate, home services, or proptech marketplaces",
+    "US emerging-manager Fund I and Fund II consumer funds under $30M",
+    "US women-led or BIPOC-led pre-seed consumer venture funds",
+    "US consumer marketplaces and two-sided network specialist seed funds",
 ]
 
 _NICHE_LISTICLES = [
-    "consumer hardware venture capital funds list",
-    "food tech venture capital seed funds",
-    "climate consumer brands venture funds",
-    "consumer subscription venture funds list",
-    "texas consumer venture capital funds",
-    "midwest consumer seed funds list",
-    "operator led consumer venture funds list",
+    "list of pre-seed consumer venture funds new york",
+    "los angeles consumer venture capital funds list",
+    "miami venture capital consumer funds",
+    "rolling funds consumer angellist list",
+    "consumer marketplace seed funds list",
+    "emerging manager consumer fund I list",
+    "best consumer angel investors funds",
+    "dtc brand venture capital funds list",
 ]
 
 
@@ -66,7 +71,7 @@ def _niche_llm() -> list[dict]:
     )
     for angle in _NICHE_ANGLES:
         prompt = (
-            f"List up to 30 {angle}. Return JSON {{\"funds\": [{{\"firm\": str, "
+            f"List up to 40 {angle}. Return JSON {{\"funds\": [{{\"firm\": str, "
             "\"website\": str, \"hint\": str}}]}}. US-based, smaller / emerging funds."
         )
         data = llm.chat_json(sys, prompt, model=llm.big_model(), temperature=0.5)
@@ -75,6 +80,57 @@ def _niche_llm() -> list[dict]:
             if firm:
                 dom = (f.get("website") or "").replace("https://", "").replace("http://", "").strip("/")
                 out.append({"firm": firm, "website": f"https://{dom}" if dom else "", "hint": f.get("hint", ""), "source": "niche_llm"})
+    return out
+
+
+import re as _re
+
+# Investor directories + big curated lists. The fund name is usually right in
+# the search-result title, so we harvest titles directly (cheap, no page fetch),
+# and let profiling verify each one.
+_DIRECTORY_QUERIES = [
+    "site:openvc.app consumer",
+    "site:openvc.app marketplace",
+    "site:openvc.app pre-seed consumer",
+    "site:signal.nfx.com consumer seed",
+    "site:signal.nfx.com marketplace",
+    "consumer venture fund openvc",
+    "list of consumer pre-seed venture funds",
+    "top consumer seed investors list",
+    "dtc brand venture capital funds list",
+    "marketplace focused seed investors list",
+    "consumer fund I emerging managers list",
+    "consumer angel syndicates list United States",
+]
+
+# Note: en/eM dash separators are normalized to a hyphen via chr() before this
+# runs, so the pattern only needs the ascii separators.
+_TITLE_SUFFIX = _re.compile(
+    r"\s*[|:\-]\s*(openvc|signal.*|nfx|crunchbase|pitchbook|linkedin|wellfound|"
+    r"angellist|home|investors?|venture capital|vc firm|profile).*$",
+    _re.I,
+)
+_DASHES = (chr(0x2013), chr(0x2014))
+
+
+def _directory_candidates() -> list[dict]:
+    out, seen = [], set()
+    for q in _DIRECTORY_QUERIES:
+        for r in search.web_search(q, num=10):
+            title = (r.get("title") or "").strip()
+            for ch in _DASHES:
+                title = title.replace(ch, "-")
+            name = _TITLE_SUFFIX.sub("", title).strip()
+            # Keep plausible firm names only.
+            if not name or len(name) < 3 or len(name) > 60:
+                continue
+            if any(w in name.lower() for w in ("how to", "best ", "list of", "top ", "guide")):
+                continue
+            k = name.lower()
+            if k in seen:
+                continue
+            seen.add(k)
+            out.append({"firm": name, "website": "", "hint": "directory", "source": "directory"})
     return out
 
 
@@ -116,7 +172,7 @@ def main() -> int:
     existing = {discover._norm(r.get("firm", "")) for r in recs}
     print(f"cache has {len(recs)} records")
 
-    pool = _niche_llm() + _niche_listicles()
+    pool = _niche_llm() + _niche_listicles() + _directory_candidates()
     # Dedup against existing + within new, and drop megafunds before profiling.
     fresh, fresh_keys = [], set()
     for c in pool:

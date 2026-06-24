@@ -24,7 +24,9 @@ COLUMNS = [
     "pre_seed",
     "est_fund_size_usd",
     "sub_20m",
+    "over_20m_usd",
     "size_confidence",
+    "fund_size_source",
     "fund_size_basis",
     "is_consumer",
     "consumer_confidence",
@@ -86,8 +88,13 @@ def rows_from_records(records: list[dict]) -> list[dict]:
     for rec in records:
         est = rec.get("est_fund_size_usd")
         sub_20m = ""
+        over_20m = ""
         if isinstance(est, (int, float)):
-            sub_20m = "yes" if est < 20_000_000 else "no"
+            if est < 20_000_000:
+                sub_20m = "yes"
+            else:
+                sub_20m = "no"
+                over_20m = est - 20_000_000
         pre_seed = "yes" if is_pre_seed(rec) else ""
         base = {
             "firm": rec.get("firm", ""),
@@ -100,7 +107,9 @@ def rows_from_records(records: list[dict]) -> list[dict]:
             "pre_seed": pre_seed,
             "est_fund_size_usd": est if est is not None else "",
             "sub_20m": sub_20m,
+            "over_20m_usd": over_20m,
             "size_confidence": rec.get("size_confidence", ""),
+            "fund_size_source": rec.get("fund_size_source", ""),
             "fund_size_basis": rec.get("fund_size_basis", ""),
             "is_consumer": _yn(rec.get("is_consumer")),
             "consumer_confidence": rec.get("consumer_confidence", ""),

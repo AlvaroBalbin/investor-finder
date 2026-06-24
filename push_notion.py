@@ -47,13 +47,19 @@ def build_props(d: dict) -> dict:
         "HQ": _text(d.get("hq_location")),
         "Stage": _text(d.get("stage")),
         "Check size": _text(d.get("check_size")),
-        "Est fund size": _text(d.get("est_fund_size_usd")),
+        "Est fund size": _text(d.get("fund_size_display")),
+        "Over $20M by": _text(d.get("over_20m_text")),
+        "Fund size source": _text(d.get("fund_size_source")),
         "# Founders": {"number": d.get("num_founders", 0)},
         "Thesis": _text(d.get("thesis")),
         "Sectors": _text(d.get("sectors")),
         "Founders (role | linkedin | email)": _text(d.get("founders_text")),
         "Source": _text(d.get("discovery_source")),
+        "Priority": {"number": d.get("priority", 0)},
     }
+    sf = _select(d.get("sf_area"), {"yes", "no"})
+    if sf:
+        props["SF area"] = sf
     ps = _select(d.get("pre_seed"), {"yes", "no"}, default="no")
     if ps:
         props["Pre-seed"] = ps

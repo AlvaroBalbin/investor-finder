@@ -14,7 +14,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 
 from pipeline import contacts, output
-from pipeline.exclude import is_excluded
+from pipeline.exclude import is_excluded, is_not_fund
 from pipeline.output import is_pre_seed, stage_is_early
 
 # Buckets we keep. "small" = $20-50M (allowed per the brief); "unknown" kept
@@ -28,6 +28,8 @@ def _log(msg: str) -> None:
 
 def passes_filter(rec: dict, size_ceiling: float) -> bool:
     if is_excluded(rec.get("firm", "")):
+        return False
+    if is_not_fund(rec.get("firm", ""), rec.get("website", "")):
         return False
     if not rec.get("is_us"):
         return False
