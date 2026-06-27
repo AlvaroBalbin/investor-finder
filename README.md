@@ -7,15 +7,10 @@ fund's founders and partners. Built to assemble a targeted outreach list of
 
 ## Why this exists
 
-I built this to source my startup's pre-seed. Instead of buying a list or
-grinding through Crunchbase by hand, I wanted a repeatable pipeline that
-proposes funds, checks each against the live web, pulls real fund sizes from
-SEC filings, and hands back a partner-level list I could actually email.
-
-It produced our real outreach list: 144 funds, 460 partners, a LinkedIn for 96%
-of them and an email for every one, zero unknown fund sizes. Open-sourcing it
-because the legwork is identical for any founder raising a small round. Point it
-at your own thesis by editing the seed list and filters.
+I built this to raise my own pre-seed instead of grinding Crunchbase by hand. It
+spat out my real list: 144 funds, 460 partners, a LinkedIn for 96% and an email
+for every one. Sharing it because every founder raising a small round does the
+same tedious legwork. Edit the seeds and filters for your thesis.
 
 ## What it produces
 
