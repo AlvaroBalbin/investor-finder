@@ -39,6 +39,8 @@ It can also push the same table to Notion.
 
 ## Setup
 
+Requires Python 3.10+.
+
 ```
 pip install -r requirements.txt
 cp .env.example .env   # fill in the keys you have
