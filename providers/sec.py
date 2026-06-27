@@ -14,9 +14,15 @@ import re
 import urllib.parse
 import xml.etree.ElementTree as ET
 
+import config
+
 from . import http
 
-_UA = {"User-Agent": "sg-investor-finder research alvaro@socialgravity.ai"}
+# SEC asks that automated requests identify themselves with a real contact
+# address. Set SEC_CONTACT_EMAIL in your .env; the default is a harmless
+# placeholder that still satisfies the format.
+_CONTACT = config.get("SEC_CONTACT_EMAIL", "investor-finder@example.com")
+_UA = {"User-Agent": f"investor-finder research {_CONTACT}"}
 _EFTS = "https://efts.sec.gov/LATEST/search-index?q={q}&forms=D"
 _GETCO = (
     "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company={q}"

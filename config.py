@@ -1,12 +1,12 @@
 """
 Central config + secret loading.
 
-Loads environment variables from this repo's own `.env` first. For local
-convenience while this lives next to the other SocialGravity repos, it will
-ALSO fall back to reading `../thescraper/.env` for any key it doesn't already
-have, so you don't have to duplicate the provider keys. That fallback is a
-no-op on any machine that doesn't have a sibling thescraper checkout, so it is
-safe to keep when this repo is open-sourced.
+Loads environment variables from the process environment first, then this
+repo's own `.env`. As a local convenience it will ALSO fall back to reading a
+sibling `../thescraper/.env` for any key it doesn't already have, so if you keep
+related tools side by side you don't have to duplicate provider keys. That
+fallback is a no-op on any machine without that sibling checkout, so it is
+harmless to leave in place.
 
 No secret values are ever printed or committed (.env is gitignored).
 """
@@ -18,8 +18,10 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent
 
-# Keys this tool may use. Pulled from the repo .env, falling back to a sibling
-# thescraper/.env for local runs.
+# Settings this tool may use. Pulled from the process env or the repo .env,
+# falling back to a sibling thescraper/.env for local runs. Most are provider
+# secrets; the COMPANY_* and SEC_CONTACT_EMAIL entries are plain config used to
+# tailor outreach text and the SEC request header.
 KNOWN_KEYS = [
     "SERPER_API_KEY",
     "PILOTERR_API_KEY",
@@ -28,6 +30,9 @@ KNOWN_KEYS = [
     "OPENAI_API_KEY",
     "XAI_API_KEY",
     "NOTION_TOKEN",
+    "COMPANY_NAME",
+    "COMPANY_PITCH",
+    "SEC_CONTACT_EMAIL",
 ]
 
 
@@ -89,6 +94,10 @@ def have(key: str) -> bool:
     return bool(get(key))
 
 
+# Provider secrets only, for the status readout (excludes plain COMPANY_*/SEC config).
+_PROVIDER_KEYS = [k for k in KNOWN_KEYS if k.endswith(("_API_KEY", "_TOKEN"))]
+
+
 def status() -> dict[str, bool]:
     """Which providers are configured (booleans only, never values)."""
-    return {k: have(k) for k in KNOWN_KEYS}
+    return {k: have(k) for k in _PROVIDER_KEYS}

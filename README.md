@@ -1,9 +1,14 @@
-# sg-investor-finder
+# investor-finder
 
 Finds small US venture funds that lean consumer / B2C (with a marketplace tilt
 where possible), and resolves a LinkedIn URL and a best-effort email for each
 fund's founders and partners. Built to assemble a targeted outreach list of
 100 to 200 funds in a single run.
+
+Built to source a pre-seed round; open-sourced because the pipeline
+(LLM-proposed candidates verified against the live web, fund sizes pulled from
+SEC Form D, contacts resolved with confidence tags) generalizes to any founder
+doing the same legwork. Tune the seed list and filters for your own thesis.
 
 ## What it produces
 
@@ -69,6 +74,14 @@ python run.py --notion              # also push to Notion (needs token + parent)
   search. Run with `--enrichment-email` plus the EnrichLayer key to also verify
   profiles.
 
+## Outreach angles (optional)
+
+`python fit.py` drafts a one-line "why this fund fits" and a cold-open hook per
+fund, grounded in each fund's stated thesis. Set `COMPANY_NAME` and
+`COMPANY_PITCH` in your `.env` so the drafts are about your company; with no
+pitch set it falls back to a placeholder. These are starting drafts, meant to be
+edited before you send anything.
+
 ## Layout
 
 ```
@@ -77,4 +90,5 @@ providers/           thin API clients: search, web, llm, people, http
 pipeline/            discover -> profile -> classify -> contacts -> output
   seeds.py           curated seed funds
 run.py               orchestrator / CLI
+fit.py               optional per-fund outreach angle drafts
 ```

@@ -55,7 +55,7 @@ def build_props(d: dict) -> dict:
         "Sectors": _text(d.get("sectors")),
         "Founders (role | linkedin | email)": _text(d.get("founders_text")),
         "Source": _text(d.get("discovery_source")),
-        "Fit (SocialGravity)": _text(d.get("fit_sg")),
+        "Fit note": _text(d.get("fit_note")),
         "Priority": {"number": d.get("priority", 0)},
     }
     sf = _select(d.get("sf_area"), {"yes", "no"})
